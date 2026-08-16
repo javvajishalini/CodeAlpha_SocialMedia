@@ -9,10 +9,7 @@ const { app, server } = require('./socket/socket');
 dotenv.config();
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:5173', 'https://code-alpha-social-media-7ba5o70xa-javvajishalinis-projects.vercel.app'],
-  credentials: true
-}));
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 // Routes
