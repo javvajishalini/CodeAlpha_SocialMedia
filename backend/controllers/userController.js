@@ -144,4 +144,47 @@ const searchUsers = async (req, res) => {
   }
 };
 
-module.exports = { getUserProfile, updateUserProfile, followUser, unfollowUser, searchUsers };
+// @desc    Toggle save post
+// @route   POST /api/users/save/:postId
+// @access  Private
+const toggleSavePost = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const post = await Post.findById(req.params.postId);
+    
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    
+    const isSaved = user.savedPosts.includes(post._id);
+    
+    if (isSaved) {
+      user.savedPosts = user.savedPosts.filter(id => id.toString() !== post._id.toString());
+    } else {
+      user.savedPosts.push(post._id);
+    }
+    
+    await user.save();
+    res.json({ savedPosts: user.savedPosts });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Get saved posts
+// @route   GET /api/users/saved
+// @access  Private
+const getSavedPosts = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate({
+      path: 'savedPosts',
+      populate: { path: 'author', select: 'name username profilePicture' }
+    });
+    
+    res.json(user.savedPosts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { getUserProfile, updateUserProfile, followUser, unfollowUser, searchUsers, toggleSavePost, getSavedPosts };

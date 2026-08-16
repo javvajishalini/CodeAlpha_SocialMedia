@@ -2,9 +2,9 @@ import { useContext, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
-import { Home, User, Settings, LogOut, Search, Bell } from 'lucide-react';
+import { Home, User, Settings, LogOut, Search, Bell, Sun, Moon } from 'lucide-react';
 
-const Navbar = () => {
+const Navbar = ({ toggleTheme, isDark }) => {
   const { user, logout } = useContext(AuthContext);
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -24,27 +24,27 @@ const Navbar = () => {
     };
     
     fetchUnread();
-  }, [user, location.pathname]); // re-fetch when location changes (e.g. visiting notifications page)
+  }, [user, location.pathname]);
 
   if (!user) return null;
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-200 dark:border-slate-800 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Connectify</span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-indigo-400 dark:to-blue-400 bg-clip-text text-transparent">Connectify</span>
             </Link>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <Link to="/" className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <Link to="/" className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
               <Home className="h-6 w-6" />
             </Link>
-            <Link to="/explore" className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <Link to="/explore" className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
               <Search className="h-6 w-6" />
             </Link>
-            <Link to="/notifications" className="relative text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <Link to="/notifications" className="relative text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
               <Bell className="h-6 w-6" />
               {unreadCount > 0 && (
                 <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
@@ -52,12 +52,15 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
-            <Link to={`/profile/${user.username}`} className="text-gray-500 hover:text-blue-600 p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <button onClick={toggleTheme} className="text-gray-500 dark:text-gray-400 hover:text-yellow-500 dark:hover:text-yellow-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+              {isDark ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+            </button>
+            <Link to={`/profile/${user.username}`} className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
               <User className="h-6 w-6" />
             </Link>
             <button 
               onClick={logout} 
-              className="text-gray-500 hover:text-red-600 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             >
               <LogOut className="h-6 w-6" />
             </button>
@@ -69,3 +72,5 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+

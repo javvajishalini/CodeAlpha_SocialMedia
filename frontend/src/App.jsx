@@ -9,11 +9,12 @@ import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import Explore from './pages/Explore';
 import Notifications from './pages/Notifications';
+import { useState, useEffect } from 'react';
 
 // Layout component with Navbar
-const Layout = () => (
+const Layout = ({ toggleTheme, isDark }) => (
   <div className="min-h-screen">
-    <Navbar />
+    <Navbar toggleTheme={toggleTheme} isDark={isDark} />
     <main>
       <Outlet />
     </main>
@@ -21,6 +22,20 @@ const Layout = () => (
 );
 
 function App() {
+  const [isDark, setIsDark] = useState(localStorage.getItem('theme') === 'dark');
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  const toggleTheme = () => setIsDark(!isDark);
+
   return (
     <AuthProvider>
       <Router>
@@ -28,7 +43,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
-          <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+          <Route element={<ProtectedRoute><Layout toggleTheme={toggleTheme} isDark={isDark} /></ProtectedRoute>}>
             <Route path="/" element={<Feed />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/notifications" element={<Notifications />} />

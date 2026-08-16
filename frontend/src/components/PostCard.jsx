@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Trash2, Bookmark } from 'lucide-react';
 
 const PostCard = ({ post, onLike, onDelete }) => {
   const { user } = useContext(AuthContext);
@@ -13,6 +13,36 @@ const PostCard = ({ post, onLike, onDelete }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  
+  // Get saved state from local storage or context (mocking it with state for simplicity here, 
+  // in a real app this should come from the global user object)
+  const [isSaved, setIsSaved] = useState(false);
+  
+  useEffect(() => {
+    // Check if this post is saved by the current user
+    const checkSaved = async () => {
+      try {
+        const config = { headers: { Authorization: `Bearer ${user.token}` } };
+        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/users/saved`, config);
+        if (data.some(p => p._id === post._id)) {
+          setIsSaved(true);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkSaved();
+  }, [post._id, user.token]);
+
+  const handleSave = async () => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${user.token}` } };
+      await axios.post(`${import.meta.env.VITE_API_URL}/users/save/${post._id}`, {}, config);
+      setIsSaved(!isSaved);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handleLike = async () => {
     try {
@@ -22,7 +52,7 @@ const PostCard = ({ post, onLike, onDelete }) => {
       } else {
         await axios.post(`${import.meta.env.VITE_API_URL}/posts/${post._id}/like`, {}, config);
       }
-      onLike(post._id); // We'd update the local state in the parent
+      onLike(post._id); 
     } catch (error) {
       console.error(error);
     }
@@ -86,11 +116,11 @@ const PostCard = ({ post, onLike, onDelete }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-4 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-5 mb-4 hover:shadow-md transition-all duration-300">
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center">
           <Link to={`/profile/${post.author.username}`}>
-            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold overflow-hidden">
+            <div className="w-10 h-10 bg-blue-100 dark:bg-indigo-900 text-blue-600 dark:text-indigo-300 rounded-full flex items-center justify-center font-bold overflow-hidden">
               {post.author.profilePicture ? (
                 <img src={post.author.profilePicture} alt="Profile" className="w-full h-full object-cover" />
               ) : (
@@ -99,10 +129,10 @@ const PostCard = ({ post, onLike, onDelete }) => {
             </div>
           </Link>
           <div className="ml-3">
-            <Link to={`/profile/${post.author.username}`} className="font-semibold text-gray-900 hover:underline">
+            <Link to={`/profile/${post.author.username}`} className="font-semibold text-gray-900 dark:text-white hover:underline">
               {post.author.name}
             </Link>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               @{post.author.username} • {new Date(post.createdAt).toLocaleDateString()}
             </div>
           </div>
@@ -114,61 +144,70 @@ const PostCard = ({ post, onLike, onDelete }) => {
         )}
       </div>
 
-      <p className="text-gray-800 mb-4 whitespace-pre-wrap">{post.content}</p>
+      <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">{post.content}</p>
       
       {post.image && (
-        <div className="mb-4 rounded-lg overflow-hidden border border-gray-100">
+        <div className="mb-4 rounded-lg overflow-hidden border border-gray-100 dark:border-slate-800">
           <img src={post.image} alt="Post attachment" className="w-full h-auto object-cover max-h-96" />
         </div>
       )}
 
-      <div className="flex items-center text-gray-500 space-x-6 border-t border-gray-100 pt-3 mt-4">
+      <div className="flex items-center justify-between text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-slate-800 pt-3 mt-4">
+        <div className="flex items-center space-x-6">
+          <button 
+            onClick={handleLike}
+            className={`flex items-center space-x-2 hover:text-red-500 transition-colors ${isLiked ? 'text-red-500' : ''}`}
+          >
+            <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+            <span>{post.likes.length}</span>
+          </button>
+          <button 
+            onClick={toggleComments}
+            className={`flex items-center space-x-2 hover:text-blue-500 transition-colors ${showComments ? 'text-blue-500' : ''}`}
+          >
+            <MessageCircle className="h-5 w-5" />
+            <span>{post.comments?.length || 0}</span>
+          </button>
+          <button className="flex items-center space-x-2 hover:text-green-500 transition-colors">
+            <Share2 className="h-5 w-5" />
+          </button>
+        </div>
+        
         <button 
-          onClick={handleLike}
-          className={`flex items-center space-x-2 hover:text-red-500 transition-colors ${isLiked ? 'text-red-500' : ''}`}
+          onClick={handleSave}
+          className={`flex items-center space-x-2 hover:text-yellow-500 transition-colors ${isSaved ? 'text-yellow-500' : ''}`}
         >
-          <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-          <span>{post.likes.length}</span>
-        </button>
-        <button 
-          onClick={toggleComments}
-          className={`flex items-center space-x-2 hover:text-blue-500 transition-colors ${showComments ? 'text-blue-500' : ''}`}
-        >
-          <MessageCircle className="h-5 w-5" />
-          <span>{post.comments?.length || 0}</span>
-        </button>
-        <button className="flex items-center space-x-2 hover:text-green-500 transition-colors">
-          <Share2 className="h-5 w-5" />
+          <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-current' : ''}`} />
         </button>
       </div>
 
       {showComments && (
-        <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800">
           <form onSubmit={submitComment} className="flex space-x-2 mb-4">
             <input
               type="text"
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a comment..."
-              className="flex-grow bg-gray-50 rounded-full px-4 py-2 border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
+              className="flex-grow bg-gray-50 dark:bg-slate-800 dark:text-white rounded-full px-4 py-2 border border-gray-200 dark:border-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
             />
             <button 
               type="submit"
               disabled={!newComment.trim()}
-              className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors disabled:bg-blue-300"
+              className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors disabled:bg-blue-300 dark:disabled:bg-indigo-900"
             >
               <Send className="h-4 w-4" />
             </button>
           </form>
 
           {isLoadingComments ? (
-            <div className="text-center py-2 text-sm text-gray-500">Loading comments...</div>
+            <div className="text-center py-2 text-sm text-gray-500 dark:text-gray-400">Loading comments...</div>
           ) : (
             <div className="space-y-3">
               {comments.map((comment) => (
                 <div key={comment._id} className="flex space-x-3 group">
                   <Link to={`/profile/${comment.author.username}`} className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold overflow-hidden text-xs">
+                    <div className="w-8 h-8 bg-blue-100 dark:bg-indigo-900 text-blue-600 dark:text-indigo-300 rounded-full flex items-center justify-center font-bold overflow-hidden text-xs">
                       {comment.author.profilePicture ? (
                         <img src={comment.author.profilePicture} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
@@ -176,11 +215,11 @@ const PostCard = ({ post, onLike, onDelete }) => {
                       )}
                     </div>
                   </Link>
-                  <div className="flex-grow bg-gray-50 rounded-2xl px-4 py-2 relative">
-                    <Link to={`/profile/${comment.author.username}`} className="font-semibold text-gray-900 text-sm hover:underline">
+                  <div className="flex-grow bg-gray-50 dark:bg-slate-800 rounded-2xl px-4 py-2 relative">
+                    <Link to={`/profile/${comment.author.username}`} className="font-semibold text-gray-900 dark:text-white text-sm hover:underline">
                       {comment.author.name}
                     </Link>
-                    <p className="text-gray-800 text-sm">{comment.content}</p>
+                    <p className="text-gray-800 dark:text-gray-300 text-sm">{comment.content}</p>
                     
                     {comment.author._id === user?._id && (
                       <button 
@@ -194,7 +233,7 @@ const PostCard = ({ post, onLike, onDelete }) => {
                 </div>
               ))}
               {comments.length === 0 && (
-                <div className="text-center py-2 text-sm text-gray-500">No comments yet.</div>
+                <div className="text-center py-2 text-sm text-gray-500 dark:text-gray-400">No comments yet.</div>
               )}
             </div>
           )}
