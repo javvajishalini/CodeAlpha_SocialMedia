@@ -1,6 +1,7 @@
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
 const Notification = require('../models/Notification');
+const { getReceiverSocketId, io } = require('../socket/socket');
 
 // @desc    Add a comment to a post
 // @route   POST /api/posts/:id/comments
@@ -13,19 +14,20 @@ const addComment = async (req, res) => {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    const comment = new Comment({
+    const newComment = new Comment({
       author: req.user._id,
       post: post._id,
       content
     });
 
-    const savedComment = await comment.save();
+    const savedComment = await newComment.save();
     
-    // Add comment to post's comment array
     post.comments.push(savedComment._id);
     await post.save();
 
-    // Create notification if not own post
+    await savedComment.populate('author', 'name username profilePicture');
+
+    // Create notification
     if (post.author.toString() !== req.user._id.toString()) {
       const notification = new Notification({
         recipient: post.author,
@@ -34,9 +36,13 @@ const addComment = async (req, res) => {
         post: post._id
       });
       await notification.save();
+      
+      const receiverSocketId = getReceiverSocketId(post.author.toString());
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('newNotification', notification);
+      }
     }
 
-    await savedComment.populate('author', 'name username profilePicture');
     res.status(201).json(savedComment);
   } catch (error) {
     console.error(error);

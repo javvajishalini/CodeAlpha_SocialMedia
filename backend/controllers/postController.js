@@ -1,6 +1,7 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const { getReceiverSocketId, io } = require('../socket/socket');
 
 // @desc    Create a new post
 // @route   POST /api/posts
@@ -62,13 +63,28 @@ const getExplorePosts = async (req, res) => {
 const getFeedPosts = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    const following = user.following || [];
-    following.push(req.user._id); // include own posts
+    
+    // Get posts from users the current user follows AND the current user's own posts
+    const followingIds = [...user.following, user._id];
+    
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 5;
+    const skip = (page - 1) * limit;
 
-    const posts = await Post.find({ author: { $in: following } })
+    const totalPosts = await Post.countDocuments({ author: { $in: followingIds } });
+
+    const posts = await Post.find({ author: { $in: followingIds } })
       .populate('author', 'name username profilePicture')
-      .sort({ createdAt: -1 });
-    res.json(posts);
+      .populate('comments.author', 'name username profilePicture')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      posts,
+      hasMore: totalPosts > skip + posts.length,
+      total: totalPosts
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -155,6 +171,11 @@ const likePost = async (req, res) => {
         post: post._id
       });
       await notification.save();
+      
+      const receiverSocketId = getReceiverSocketId(post.author.toString());
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit('newNotification', notification);
+      }
     }
 
     res.json(post.likes);

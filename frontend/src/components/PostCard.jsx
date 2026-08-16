@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Send, Trash2, Bookmark } from 'lucide-react';
 
 const PostCard = ({ post, onLike, onDelete }) => {
@@ -115,6 +116,20 @@ const PostCard = ({ post, onLike, onDelete }) => {
     }
   };
 
+  const handleShare = () => {
+    const postUrl = `${window.location.origin}/post/${post._id}`;
+    if (navigator.share) {
+      navigator.share({
+        title: `Post by ${post.author.name}`,
+        text: post.content,
+        url: postUrl,
+      }).catch((err) => console.log('Error sharing:', err));
+    } else {
+      navigator.clipboard.writeText(postUrl);
+      toast.success('Link copied to clipboard!');
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-5 mb-4 hover:shadow-md transition-all duration-300">
       <div className="flex justify-between items-start mb-4">
@@ -168,7 +183,7 @@ const PostCard = ({ post, onLike, onDelete }) => {
             <MessageCircle className="h-5 w-5" />
             <span>{post.comments?.length || 0}</span>
           </button>
-          <button className="flex items-center space-x-2 hover:text-green-500 transition-colors">
+          <button onClick={handleShare} className="flex items-center space-x-2 hover:text-green-500 transition-colors">
             <Share2 className="h-5 w-5" />
           </button>
         </div>

@@ -1,11 +1,14 @@
 import { useContext, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
+import SocketContext from '../context/SocketContext';
 import axios from 'axios';
 import { Home, User, Settings, LogOut, Search, Bell, Sun, Moon } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Navbar = ({ toggleTheme, isDark }) => {
   const { user, logout } = useContext(AuthContext);
+  const { socket } = useContext(SocketContext);
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -25,6 +28,23 @@ const Navbar = ({ toggleTheme, isDark }) => {
     
     fetchUnread();
   }, [user, location.pathname]);
+
+  // Listen for real-time notifications
+  useEffect(() => {
+    if (socket) {
+      socket.on('newNotification', (notification) => {
+        setUnreadCount(prev => prev + 1);
+        let message = 'You have a new notification!';
+        if (notification.type === 'like') message = 'Someone liked your post!';
+        if (notification.type === 'comment') message = 'Someone commented on your post!';
+        if (notification.type === 'follow') message = 'You have a new follower!';
+        toast.success(message);
+      });
+    }
+    return () => {
+      if (socket) socket.off('newNotification');
+    };
+  }, [socket]);
 
   if (!user) return null;
 

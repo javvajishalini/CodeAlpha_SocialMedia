@@ -1,10 +1,12 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const { app, server } = require('./socket/socket');
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+// Load env vars
+dotenv.config();
 
 // Middleware
 app.use(cors());
@@ -27,14 +29,13 @@ app.get('/', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
+const PORT = process.env.PORT || 5000;
+
 // Database Connection
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/connectify')
   .then(() => {
     console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    // Start server using the HTTP server instead of Express directly
+    server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
-  .catch((err) => {
-    console.error('Failed to connect to MongoDB', err);
-  });
+  .catch((err) => console.log('MongoDB connection error:', err));

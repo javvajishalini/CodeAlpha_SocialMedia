@@ -187,4 +187,34 @@ const getSavedPosts = async (req, res) => {
   }
 };
 
-module.exports = { getUserProfile, updateUserProfile, followUser, unfollowUser, searchUsers, toggleSavePost, getSavedPosts };
+// @desc    Get followers list
+// @route   GET /api/users/:id/followers
+// @access  Public
+const getFollowers = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .populate('followers', 'name username profilePicture bio');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user.followers);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Get following list
+// @route   GET /api/users/:id/following
+// @access  Public
+const getFollowing = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .populate('following', 'name username profilePicture bio');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user.following);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { getUserProfile, updateUserProfile, followUser, unfollowUser, searchUsers, toggleSavePost, getSavedPosts, getFollowers, getFollowing };
