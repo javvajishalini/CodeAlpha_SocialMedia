@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import SocketContext from '../context/SocketContext';
 import axios from 'axios';
-import { Home, User, Settings, LogOut, Search, Bell, Sun, Moon } from 'lucide-react';
+import { Home, User, Settings, LogOut, Search, Bell, Sun, Moon, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Navbar = ({ toggleTheme, isDark }) => {
@@ -53,8 +53,9 @@ const Navbar = ({ toggleTheme, isDark }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-indigo-400 dark:to-blue-400 bg-clip-text text-transparent">Connectify</span>
+            <Link to="/" className="flex-shrink-0 flex items-center space-x-2">
+              <MessageCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-indigo-400 dark:to-blue-400 bg-clip-text text-transparent hidden sm:block">Connectify</span>
             </Link>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">

@@ -341,7 +341,7 @@ npm run dev
 
 ## 🌐 Live Demo
 
-> Coming soon / Deployed on [your platform here]
+🔗 **[https://code-alpha-social-media-7ba5o70xa-javvajishalinis-projects.vercel.app](https://code-alpha-social-media-7ba5o70xa-javvajishalinis-projects.vercel.app)**
 
 ---
 

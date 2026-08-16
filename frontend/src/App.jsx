@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Feed from './pages/Feed';
 import Profile from './pages/Profile';
+import EditProfile from './pages/EditProfile';
 import Explore from './pages/Explore';
 import Notifications from './pages/Notifications';
 import { Toaster } from 'react-hot-toast';
@@ -96,6 +97,11 @@ function App() {
               <Route path="/profile/:username" element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/settings/profile" element={
+                <ProtectedRoute>
+                  <EditProfile />
                 </ProtectedRoute>
               } />
             </Routes>
