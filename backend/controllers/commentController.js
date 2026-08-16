@@ -1,5 +1,6 @@
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+const Notification = require('../models/Notification');
 
 // @desc    Add a comment to a post
 // @route   POST /api/posts/:id/comments
@@ -23,6 +24,17 @@ const addComment = async (req, res) => {
     // Add comment to post's comment array
     post.comments.push(savedComment._id);
     await post.save();
+
+    // Create notification if not own post
+    if (post.author.toString() !== req.user._id.toString()) {
+      const notification = new Notification({
+        recipient: post.author,
+        sender: req.user._id,
+        type: 'comment',
+        post: post._id
+      });
+      await notification.save();
+    }
 
     await savedComment.populate('author', 'name username profilePicture');
     res.status(201).json(savedComment);

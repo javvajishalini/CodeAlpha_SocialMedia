@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createPost, getPosts, getFeedPosts, getPostById, updatePost, deletePost, likePost, unlikePost } = require('../controllers/postController');
+const { createPost, getPosts, getExplorePosts, getFeedPosts, getPostById, updatePost, deletePost, likePost, unlikePost } = require('../controllers/postController');
 const { addComment, getPostComments } = require('../controllers/commentController');
 const { protect } = require('../middleware/auth');
 
@@ -9,6 +9,7 @@ router.route('/')
   .get(getPosts);
 
 router.get('/feed', protect, getFeedPosts);
+router.get('/explore', getExplorePosts);
 
 router.route('/:id')
   .get(getPostById)

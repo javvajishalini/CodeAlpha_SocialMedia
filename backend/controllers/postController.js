@@ -1,5 +1,6 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 // @desc    Create a new post
 // @route   POST /api/posts
@@ -31,6 +32,23 @@ const getPosts = async (req, res) => {
     const posts = await Post.find()
       .populate('author', 'name username profilePicture')
       .sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Get explore posts (popular/recent)
+// @route   GET /api/posts/explore
+// @access  Public
+const getExplorePosts = async (req, res) => {
+  try {
+    // Basic explore: sort by likes count or just recent
+    const posts = await Post.find()
+      .populate('author', 'name username profilePicture')
+      .sort({ createdAt: -1 })
+      .limit(30);
     res.json(posts);
   } catch (error) {
     console.error(error);
@@ -127,6 +145,18 @@ const likePost = async (req, res) => {
     
     post.likes.push(req.user._id);
     await post.save();
+
+    // Create notification if not own post
+    if (post.author.toString() !== req.user._id.toString()) {
+      const notification = new Notification({
+        recipient: post.author,
+        sender: req.user._id,
+        type: 'like',
+        post: post._id
+      });
+      await notification.save();
+    }
+
     res.json(post.likes);
   } catch (error) {
     console.error(error);
@@ -155,4 +185,4 @@ const unlikePost = async (req, res) => {
   }
 };
 
-module.exports = { createPost, getPosts, getFeedPosts, getPostById, updatePost, deletePost, likePost, unlikePost };
+module.exports = { createPost, getPosts, getExplorePosts, getFeedPosts, getPostById, updatePost, deletePost, likePost, unlikePost };

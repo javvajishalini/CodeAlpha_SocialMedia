@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Post = require('../models/Post');
+const Notification = require('../models/Notification');
 
 // @desc    Get user profile by username
 // @route   GET /api/users/:username
@@ -69,6 +70,14 @@ const followUser = async (req, res) => {
       await currentUser.save();
       await userToFollow.save();
 
+      // Create notification
+      const notification = new Notification({
+        recipient: userToFollow._id,
+        sender: currentUser._id,
+        type: 'follow'
+      });
+      await notification.save();
+
       res.json({ message: 'User followed successfully', following: currentUser.following });
     } else {
       res.status(400).json({ message: 'You already follow this user' });
@@ -110,4 +119,29 @@ const unfollowUser = async (req, res) => {
   }
 };
 
-module.exports = { getUserProfile, updateUserProfile, followUser, unfollowUser };
+// @desc    Search users
+// @route   GET /api/users/search?q=
+// @access  Public
+const searchUsers = async (req, res) => {
+  try {
+    const keyword = req.query.q
+      ? {
+          $or: [
+            { username: { $regex: req.query.q, $options: 'i' } },
+            { name: { $regex: req.query.q, $options: 'i' } },
+          ],
+        }
+      : {};
+
+    const users = await User.find(keyword)
+      .select('_id name username profilePicture')
+      .limit(10);
+      
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { getUserProfile, updateUserProfile, followUser, unfollowUser, searchUsers };
