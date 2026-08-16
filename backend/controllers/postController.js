@@ -1,4 +1,5 @@
 const Post = require('../models/Post');
+const User = require('../models/User');
 
 // @desc    Create a new post
 // @route   POST /api/posts
@@ -28,6 +29,25 @@ const createPost = async (req, res) => {
 const getPosts = async (req, res) => {
   try {
     const posts = await Post.find()
+      .populate('author', 'name username profilePicture')
+      .sort({ createdAt: -1 });
+    res.json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Get personalized feed posts
+// @route   GET /api/posts/feed
+// @access  Private
+const getFeedPosts = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const following = user.following || [];
+    following.push(req.user._id); // include own posts
+
+    const posts = await Post.find({ author: { $in: following } })
       .populate('author', 'name username profilePicture')
       .sort({ createdAt: -1 });
     res.json(posts);
@@ -135,4 +155,4 @@ const unlikePost = async (req, res) => {
   }
 };
 
-module.exports = { createPost, getPosts, getPostById, updatePost, deletePost, likePost, unlikePost };
+module.exports = { createPost, getPosts, getFeedPosts, getPostById, updatePost, deletePost, likePost, unlikePost };

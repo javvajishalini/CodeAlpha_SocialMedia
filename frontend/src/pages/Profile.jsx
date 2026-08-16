@@ -13,6 +13,8 @@ const Profile = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
 
   const isOwnProfile = currentUser?.username === username;
 
@@ -23,6 +25,12 @@ const Profile = () => {
         const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/users/${username}`);
         setProfileUser(data.user);
         setPosts(data.posts);
+        
+        // Check if current user is following this profile
+        if (data.user.followers.includes(currentUser?._id)) {
+          setIsFollowing(true);
+        }
+        setFollowersCount(data.user.followers.length);
       } catch (err) {
         setError('User not found');
       } finally {
@@ -30,7 +38,27 @@ const Profile = () => {
       }
     };
     fetchProfile();
-  }, [username]);
+  }, [username, currentUser]);
+
+  const handleFollowToggle = async () => {
+    if (!currentUser || isOwnProfile) return;
+    
+    try {
+      const config = { headers: { Authorization: `Bearer ${currentUser.token}` } };
+      
+      if (isFollowing) {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/users/${profileUser._id}/follow`, config);
+        setIsFollowing(false);
+        setFollowersCount(prev => prev - 1);
+      } else {
+        await axios.post(`${import.meta.env.VITE_API_URL}/users/${profileUser._id}/follow`, {}, config);
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handlePostDeleted = (postId) => {
     setPosts(posts.filter(p => p._id !== postId));
@@ -70,8 +98,11 @@ const Profile = () => {
                 <span>Edit Profile</span>
               </Link>
             ) : (
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-full font-medium transition-colors">
-                Follow
+              <button 
+                onClick={handleFollowToggle}
+                className={`${isFollowing ? 'bg-gray-100 text-gray-800 hover:bg-red-100 hover:text-red-600' : 'bg-blue-600 text-white hover:bg-blue-700'} px-8 py-2 rounded-full font-medium transition-colors`}
+              >
+                {isFollowing ? 'Unfollow' : 'Follow'}
               </button>
             )}
           </div>
@@ -98,7 +129,7 @@ const Profile = () => {
               <span className="text-gray-500">Following</span>
             </div>
             <div className="flex items-center space-x-1 cursor-pointer hover:underline">
-              <span className="font-bold text-gray-900">{profileUser.followers?.length || 0}</span>
+              <span className="font-bold text-gray-900">{followersCount}</span>
               <span className="text-gray-500">Followers</span>
             </div>
           </div>
